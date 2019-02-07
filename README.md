@@ -14,3 +14,5 @@ This repository is a collection of code and figures used in the final project.
 - Different variations of bike models are included in the data
 
 ## Analysis
+
+- Analysis will be updated as the project data analysis is completed
