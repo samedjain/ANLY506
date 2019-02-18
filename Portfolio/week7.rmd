@@ -1,0 +1,178 @@
+---
+title: "Data Transoformation - Week 7"
+author: "Samed Jain"
+date: "Dec 12, 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(nycflights13)
+library(tidyverse)
+```
+
+
+## 5.2.4 
+
+Find all flights that:
+
+Had an arrival delay of two or more hours
+
+```{r}
+## Use filter function
+filter(flights, arr_delay >= 120)
+```
+
+Flew to Houston (IAH or HOU)
+
+```{r}
+filter(flights, dest %in% c("IAH", "HOU"))
+```
+
+Were operated by United, American, or Delta
+
+```{r}
+filter(flights, carrier %in% c("AA", "DL", "UA"))
+```
+
+Departed in summer (July, August, and September)
+```{r}
+filter(flights, month %in% 7:9)
+```
+
+Arrived more than two hours late, but didn't leave late
+
+```{r}
+filter(flights, arr_delay > 120, dep_delay <= 0)
+```
+
+Were delayed by at least an hour, but made up over 30 minutes in flight
+
+```{r}
+# For example, if there is a  dep_delay of 30 minutes  then arr_delay should be
+# 30 - 30 = 0, so air time was on time.
+filter(flights, dep_delay >= 60, (dep_delay - arr_delay > 30))
+```
+
+Departed between midnight and 6am (inclusive)
+```{r}
+filter(flights, dep_time >= 2400 | dep_time <= 600)
+```
+
+Another useful dplyr filtering helper is between(). What does it do? Can you use it to simplify the code needed to answer the previous challenges?
+
+```{r}
+## between function gives us the range results
+filter(flights, between(dep_time, 601, 2359))
+```
+
+How many flights have a missing dep_time? What other variables are missing? What might these rows represent?
+```{r}
+##checking for missing na values and summing it up 
+sum(is.na(flights$dep_time))
+map_dbl(flights, ~ sum(is.na(.x)))
+```
+
+Why is NA ^ 0 not missing? Why is NA | TRUE not missing? Why is FALSE & NA not missing? Can you figure out the general rule? (NA * 0 is a tricky counterexample!)
+## Because anything that is `^ 0` = `1`.Because NA | TRUE is saying whether one of the two is `TRUE`((boolean OR) and the second one is. Because at least one of the two expressions can be tested:FALSE & NA. In NA & NA nothing can be tested and the results is `NA & NA`.
+
+## Regardless of number, NA does not affect the result. If it can be tested, NThe reason that NA * 0 is not equal to 0 is that it is undefined. R represents undefined results as NaN, which is an abbreviation of “not a number”.
+
+# 5.3.1 Exercises
+
+How could you use arrange() to sort all missing values to the start? (Hint: use is.na()).
+```{r}
+## use is.na to sort missing values
+arrange(flights, dep_time) %>%
+  tail()
+rowSums(df)
+arrange(df, desc(is.na(x)))
+arrange(flights, desc(is.na(dep_time)), dep_time)
+```
+
+Find flights with most delays
+```{r}
+arrange(flights, dep_delay)
+arrange(flights, desc(dep_delay))
+```
+
+Find the fastest flights.
+```{r}
+arrange(flights, air_time)
+```
+
+Which flights travelled the longest? Which travelled the shortest?
+```{r}
+# Shortest
+flights %>%
+  arrange(air_time) %>%
+  select(carrier, flight, air_time)
+# Fastest
+flights %>%
+  arrange(-air_time) %>%
+  select(carrier, flight, air_time)
+```
+# 5.4.1 
+Brainstorm as many ways as possible to select dep_time, dep_delay, arr_time, and arr_delay from flights.
+
+```{r}
+##Specify columns names as unquoted variable names.
+select(flights, dep_time, dep_delay, arr_time, arr_delay)
+Specify column names as strings.
+select(flights, "dep_time", "dep_delay", "arr_time", "arr_delay")
+Specify the column numbers of the variables.
+select(flights, 4, 6, 7, 9)
+Specify the names of the variables with character vector and one_of().
+select(flights, one_of(c("dep_time", "dep_delay", "arr_time", "arr_delay")))
+```
+
+What happens if you include the name of a variable multiple times in a select() call?
+
+```{r}
+## If we include variable name multiple times, it will only return once. This happens by default.
+
+```
+
+
+What does the one_of() function do? Why might it be helpful in conjunction with this vector?
+The one_of() function selects variables with a character vector rather than unquoted variable name arguments. This function is useful because it is easier to programmatically generate character vectors with variable names than to generate unquoted variable names, which are easier to type.
+
+# 5.4.4 
+Does the result of running the following code surprise you? How do the select helpers deal with case by default? How can you change that default?
+
+By default, each select_helper function ignore the cases of the variables.
+
+```{r}
+select(flights, contains("TIME"))
+```
+
+With this command you can read each name as literal:
+```{r}
+## Contains function gives you the results based on the condaition that conatins that parameters
+select(flights, contains("TIME", ignore.case = F))
+```
+# 5.5.2 Exercises
+Currently dep_time and sched_dep_time are easy to look at, but hard to compute with because they're not really continuous numbers. Convert them to a more convenient representation of number of minutes since midnight.
+
+```{r}
+hours2mins <- function(x) {
+  x %/% 100 * 60 + x %% 100
+}
+mutate(flights,
+       dep_time = hours2mins(dep_time),
+       sched_dep_time = hours2mins(sched_dep_time))
+mutate(flights,
+       dep_time = 60 * floor(dep_time/100) + (dep_time - floor(dep_time/100) * 100),
+       sched_dep_time = 60 * floor(sched_dep_time/100) + (sched_dep_time - floor(sched_dep_time/100) * 100))
+```
+
+Compare air_time with arr_time - dep_time. What do you expect to see? 
+```{r}
+##air time is given by arrival minus departure time
+flights %>% 
+  mutate(dep_time = (dep_time %/% 100) * 60 + (dep_time %% 100),
+         sched_dep_time = (sched_dep_time %/% 100) * 60 + (sched_dep_time %% 100),
+         arr_time = (arr_time %/% 100) * 60 + (arr_time %% 100),
+         sched_arr_time = (sched_arr_time %/% 100) * 60 + (sched_arr_time %% 100)) %>%
+  transmute((arr_time - dep_time) %% (60*24) - air_time)
+```

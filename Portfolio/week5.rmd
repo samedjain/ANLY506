@@ -1,0 +1,113 @@
+---
+title: "Data Importing - Week 5"
+author: "Samed Jain"
+date: "Nov 27, 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(tidyverse)
+```
+
+## 11.2.2 EXERCISES
+
+#### 1. What function would you use to read a file where fields were separated with "|"?
+
+    read_delim(file = ..., delim = "|")
+    
+#### 2. Apart from file, skip, and comment, what other arguments do read_csv() and read_tsv() have in common?
+
+    col_names, col_types, locale, na, quoted_na, trim_ws, n_max, guess_max, progress
+    
+#### 3. What are the most important arguments to read_fwf()?
+    
+    most important argument would be col_positions. it tells us where data ends and begins.
+    
+#### 4. Sometimes strings in a CSV file contain commas. To prevent them from causing problems they need to be surrounded by a quoting character, like " or '. By convention, read_csv() assumes that the quoting character will be ", and if you want to change it you'll need to use read_delim() instead. What arguments do you need to specify to read the following text into a data frame?
+
+```{r}
+x <- "x,y\n1,'a,b'"
+read_delim(x, delim = ",",quote = "'")
+```
+OR
+
+```{r}
+x <- "x,y\n1,'a,b'"
+read_csv(x, quote = "'")
+```
+
+#### 5. Identify what is wrong with each of the following inline CSV files. What happens when you run the code?
+
+```{r}
+read_csv("a,b\n1,2,3\n4,5,6") # Only 2 columns specified in header, but 3 columns - so the last column gets dropped
+read_csv("a,b,c\n1,2\n1,2,3,4") # number of rows and columns don't match
+read_csv("a,b\n\"1", col_names = FALSE) # The opening quote `"1` is dropped because it is not closed, and `a` is treated as an integer.
+read_csv("a,b\n1,2\na,b") # col_names need to be set to FALSE
+read_csv("a;b\n1;3") # Change delim to ','
+```
+
+## 11.3.5 Exercises
+
+#### 1. What are the most important arguments to locale()?
+
+   Most important arguments are based on: date and time formats (date_names), time zone (tz), numbers (decimal_mark), encoding (encoding)
+    
+    
+#### 2. What happens if you try and set decimal_mark and grouping_mark to the same character? What happens to the default value of grouping_mark when you set decimal_mark to ","? What happens to the default value of decimal_mark when you set the grouping_mark to "."?
+
+The error because `decimal_mark` and `grouping_mark` are not different - error will be displayed
+The default value becomes "." as the "'" is replaced with "." The default value becomes "," as "." is replaced with "'"
+  
+#### 3. I didn't discuss the date_format and time_format options to locale(). What do they do? Construct an example that shows when they might be useful.
+
+Used for default date and time format, more practical to use if date and time format remain constant.
+
+```{r}
+parse_date("15 janvier 2015", "%d %B %Y", locale = locale("fr"))
+parse_date("20 oct. 1990", "%d %b %Y", locale = locale("fr"))
+```
+
+#### 4. If you live outside the US, create a new locale object that encapsulates the settings for the types of file you read most commonly.
+
+```{r}
+locale(date_format = "%d-%m-%Y", time_format = "%H:%M:%S", decimal_mark = ".", grouping_mark = ",")
+```
+#### 5. What's the difference between read_csv() and read_csv2()?
+
+  Primary difference is that read_csv() will use a comma or period fo seperation, while the other function uses semi colon.	
+
+#### 6. What are the most common encodings used in Europe? What are the most common encodings used in Asia? Do some googling to find out.
+European 
+Western European Latin script languages: ISO-8859-1, Windows-1250 (also CP-1250 for code-point)
+Eastern European Latin script languages: ISO-8859-2, Windows-1252
+Greek: ISO-8859-7
+Turkish: ISO-8859-9, Windows-1254
+Hebrew: ISO-8859-8, IBM424, Windows 1255
+Russian: Windows 1251
+Japanese: Shift JIS, ISO-2022-JP, EUC-JP
+Korean: ISO-2022-KR, EUC-KR
+Chinese: GB18030, ISO-2022-CN (Simplified), Big5 (Traditional)
+Arabic: ISO-8859-6, IBM420, Windows 1256
+
+
+#### 7. Generate the correct format string to parse each of the following dates and times:
+
+```{r}
+d1 <- "January 1, 2010"
+d2 <- "2015-Mar-07"
+d3 <- "06-Jun-2017"
+d4 <- c("August 19 (2015)", "July 1 (2015)")
+d5 <- "12/30/14" # Dec 30, 2014
+t1 <- "1705"
+t2 <- "11:15:10.12 PM"
+parse_date(d1, "%B %d, %Y")
+parse_date(d2, "%Y-%b-%d")
+parse_date(d3, "%d-%b-%Y")
+parse_date(d4, "%B %d (%Y)")
+parse_date(d5, "%m/%d/%y")
+parse_time(t1, "%H%M")
+```
